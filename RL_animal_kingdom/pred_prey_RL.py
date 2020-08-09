@@ -1,4 +1,4 @@
-from environment_module import *
+from .environment_module import *
 
 import pickle  # pickle file for saving/loading Q-tables. Did this in ENPH 353
 import time  # using this to keep track of our saved Q-Tables.
