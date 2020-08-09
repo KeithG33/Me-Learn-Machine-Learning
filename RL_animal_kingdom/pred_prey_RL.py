@@ -1,4 +1,4 @@
-from environment_module import the_environment, Creatures
+from environment_module import *
 
 import pickle  # pickle file for saving/loading Q-tables. Did this in ENPH 353
 import time  # using this to keep track of our saved Q-Tables.
@@ -31,14 +31,15 @@ DISCOUNT = 0.95
 PLAYER_N = 1  # player key in colour dict  
 PREY_N = 2  # prey key in colour dict
 PREDATOR_N = 3  # predator key in colour dict
-WALL_N = 4
+WALL_N = 4 # wall
+EMPTY = 5 # the abyss
 
 # color dict to label pred/prey/player/obstacle
 d = {1: (255, 0, 0),  # player (blue)
      2: (0, 255, 0),  # prey (green)
-     3: (0, 0, 255),  # predator (red)
-     4: (255,255,255)}  # wall (white)
-
+     3: (0, 0, 255),  # pred (red)
+     4: (255,255,255),  # wall (white)
+     5: (0, 0, 0)} # the abyss. aka nothing (black)
 
 
 # Now the Q-Learning begins. Need Q-table first
@@ -62,9 +63,9 @@ else:
 # make an obversation --> choose an action --> get reward --> update table. Classic Q-Learning.
 episode_rewards = []
 for episode in range(NUM_EPISODES):
+
     # instantiating the enviro will create an enviro with creatures and wall in random positions
     enviro = the_environment() 
-
 
     # If show == true then the enviro will be rendered and we can see what is happening
     if episode % SHOW_EVERY == 0:
@@ -84,13 +85,15 @@ for episode in range(NUM_EPISODES):
         prev_x = enviro.player.x
         prev_y = enviro.player.y
 
+        prev_predx = enviro.pred.x
+        prev_predy = enviro.pred.y
+
 
         # if we get a random number bigger than our random factor epsilon then we use our Q-table, otherwise move rando and hope that monster don't eat you.
         # This is where we set exploration/exploitation
         if np.random.random() > epsilon:
             i=0
             action = ordered_action_list[i]
-
             enviro.player.action(action)
 
             # This no bueno since it could theoretically get an out of bounds error. Lets just assume for now that there won't be a wall in every direction
@@ -108,10 +111,52 @@ for episode in range(NUM_EPISODES):
                 action = np.random.randint(0,8)
                 enviro.player.action(action)
 
-        #### LATER ###
-        #predator.move()
+        #### LATER ### So here we want the predator to move towards the player if he is able to see him. ie, a wall isn't in the way
         #prey.move()
         ##############
+
+        # Definitely want to clean this up. Theres a nasty amount of repeating
+        if enviro.pred_behind_wall():
+            action = np.random.randint(0, 8)
+            enviro.pred.action(action)
+            while enviro.is_wall(enviro.pred.x,enviro.pred.y):
+                enviro.pred.set_location(prev_predx, prev_predy)
+                action = np.random.randint(0,8)
+                enviro.pred.action(action)
+        else:
+            if enviro.pred.x > enviro.player.x:
+                if enviro.pred.y > enviro.player.y:
+                    enviro.pred.move(-1,-1)
+                elif enviro.pred.y < enviro.player.y:
+                    enviro.pred.move(-1,1)
+                else:
+                    enviro.pred.move(-1,0)
+                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+                    enviro.pred.set_location(prev_predx, prev_predy)
+                    action = np.random.randint(0,8)
+                    enviro.pred.action(action)
+            elif enviro.pred.x < enviro.player.x :
+                if enviro.pred.y > enviro.player.y:
+                    enviro.pred.move(1,-1)
+                elif enviro.pred.y < enviro.player.y:
+                    enviro.pred.move(1,1)
+                else:
+                    enviro.pred.move(1,0)
+                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+                    enviro.pred.set_location(prev_predx, prev_predy)
+                    action = np.random.randint(0,8)
+                    enviro.pred.action(action)
+            elif enviro.pred.x == enviro.player.x:
+                if enviro.pred.y > enviro.player.y:
+                    enviro.pred.move(0,-1)
+                elif enviro.pred.y < enviro.player.y:
+                    enviro.pred.move(0,1)
+                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+                    enviro.pred.set_location(prev_predx, prev_predy)
+                    action = np.random.randint(0,8)
+                    enviro.pred.action(action)  
+            
+
 
         # Set rewards for getting prey or being eaten by predator, otherwise moves get small penalty and eating our prey is big win-win.
         if enviro.player.x == enviro.pred.x and enviro.player.y == enviro.pred.y:
@@ -137,15 +182,19 @@ for episode in range(NUM_EPISODES):
         # Now we need to display the enviro
         if show:
             enviro.remove_creature(prev_x,prev_y)
-
             enviro.place_creature(enviro.player.x,enviro.player.y, PLAYER_N)
+  
+            enviro.remove_creature(prev_predx,prev_predy)
+            if prev_predx == enviro.prey.x and prev_predy == enviro.prey.y:
+                enviro.place_creature(enviro.prey.x,enviro.prey.y)
+            enviro.place_creature(enviro.pred.x,enviro.pred.y, PREDATOR_N)
 
             enviro.display_env()            
             # If the round is over we want to see the ending to determine if our player failed/succeeded. In the OpenCV documentation apparently
-            # it's a general convention to use "q" for halting indefinite operations. I  never used this during my 353 Robo Project somehow hehe.
+            # it's a general convention to use "q" for halting indefinite operations. Now I know hehe.
             #
             # Anyway...WaitKey returns 32bit integer of pressed key, ord('q') returns unicode code pointer of q and the 0xFF is a bit mask
-            # just like we did in CPEN 312. Masks the MSD's making them 0, leaving the LSD digits we care about for the comparison
+            # just like we did in CPEN 312. Masks the MSD's making them 0, leaving the LSD digits we care about for the comparison. 
             if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
                 if cv2.waitKey(1000) & 0xFF == ord('q'):
                     break

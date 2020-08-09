@@ -20,15 +20,21 @@ d = {1: (255, 0, 0),  # player (blue)
      4: (255,255,255),  # wall (white)
      5: (0, 0, 0)} # the abyss. aka nothing (black) 
 
+HWALL_Y = 5
+HWALL_XA =3
+HWALL_XB = 7
+
+
 # This will be the environment our creatures and us live in. Initialized with walls, and animals, and us (player)
 class the_environment:
     def __init__(self): 
         self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8) # initialize to a black array/grid of squares with walls
-        self.place_horiz_wall(3,7,5)
-
+        self.place_horiz_wall(HWALL_XA, HWALL_XB, HWALL_Y)
         self.player = Creatures()
         self.prey = Creatures()
         self.pred = Creatures()
+        self.wall_a = (HWALL_XA,HWALL_Y)
+        self.wall_b = (HWALL_XB,HWALL_Y)
 
         while self.is_occupied(self.player.x, self.player.y):
             self.player.x = np.random.randint(0,SIZE)
@@ -45,7 +51,6 @@ class the_environment:
             self.pred.y = np.random.randint(0,SIZE)
         self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
     
-    
     def is_occupied(self,x,y):
         if self.env[y][x].all() == 0:
             return False
@@ -53,7 +58,7 @@ class the_environment:
             return True
         return False
 
-    # No idea why the above code doesnt work when using 255 instead of 0...
+    # No idea why the above code doesnt work when using 255 instead of 0...Should fix this later
     def is_wall(self,x,y):
         count = 0
         for value in self.env[y][x]:
@@ -83,9 +88,44 @@ class the_environment:
     
     def display_env(self):
         img = Image.fromarray(self.env, 'RGB')
-        img = img.resize((750, 750))
+        img = img.resize((500, 500))
         cv2.imshow("image", np.array(img))
-        cv2.waitKey(1)
+        cv2.waitKey(0)
+
+    # Checking if the player can see the pred (or vice versa). Need to check if there is a wall in the way by finding
+    # angle to walls and player/pred
+    def pred_behind_wall(self):
+        def find_angle(x1,y1,x2,y2):
+            rise = y2-y1
+            run = x2-x1
+            return np.arctan2(rise,run) * 180 / np.pi + 180 # shifting this makes it between 0->2pi instead of -pi->pi
+        
+        x1 = self.player.x
+        y1 = self.player.y
+        x2 = self.pred.x
+        y2 = self.pred.y
+
+        play_wallA_angle = find_angle(x1,y1, HWALL_XA,HWALL_Y)
+        play_wallB_angle = find_angle(x1,y1,HWALL_XB,HWALL_Y)
+        play_pred_angle = find_angle(x1,y1,x2,y2)
+ 
+        if y1 < HWALL_Y and y2 > HWALL_Y:
+            if play_wallB_angle <= play_pred_angle <= play_wallA_angle:
+                return True
+            else:
+                return False
+        elif y1 > HWALL_Y and y2 < HWALL_Y:
+            if play_wallA_angle <= play_pred_angle <= play_wallB_angle:
+                return True
+            else:
+                return False
+        elif y1 == HWALL_Y and y2 != HWALL_Y:
+            return False
+        elif y1 == HWALL_Y and y2 == HWALL_Y:
+            if x1 < HWALL_XA and x2 < HWALL_XA:
+                return True
+            elif x1 > HWALL_XB and x2 > HWALL_XB:
+                return True
 
 class Creatures:
     def __init__(self):
@@ -144,3 +184,4 @@ class Creatures:
     def set_location(self, x, y):
         self.x = x
         self.y = y
+
