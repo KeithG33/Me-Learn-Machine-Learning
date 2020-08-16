@@ -25,7 +25,7 @@ HWALL_XA =3
 HWALL_XB = 7
 
 
-# This will be the environment our creatures and us live in. Initialized with walls, and animals, and us (player)
+# Here we describe our environment (a black array of size SIZE) and the creatures in it. Here we can choose to initialize the world how we want it with walls, animals, and us (player). 
 class the_environment:
     def __init__(self): 
         self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8) # initialize to a black array/grid of squares with walls
@@ -58,7 +58,7 @@ class the_environment:
             return True
         return False
 
-    # No idea why the above code doesnt work when using 255 instead of 0...Should fix this later
+    # No idea why the above code doesnt work when using 255 instead of 0...I'll deal with this later
     def is_wall(self,x,y):
         count = 0
         for value in self.env[y][x]:
@@ -98,7 +98,7 @@ class the_environment:
         def find_angle(x1,y1,x2,y2):
             rise = y2-y1
             run = x2-x1
-            return np.arctan2(rise,run) * 180 / np.pi + 180 # shifting this makes it between 0->2pi instead of -pi->pi
+            return np.arctan2(rise,run) * 180 / np.pi + 180 # shifting this makes it between 0->2pi instead of -pi->pi. No negs
         
         x1 = self.player.x
         y1 = self.player.y
@@ -184,4 +184,3 @@ class Creatures:
     def set_location(self, x, y):
         self.x = x
         self.y = y
-

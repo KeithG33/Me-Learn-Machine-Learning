@@ -1,6 +1,13 @@
-from .environment_module import *
+# This began as a simple Q-learning script from watching a youtube video by pythonprogamming.net.Credit to them
+# for the skeleton of this code, and many thanks for the fun toy problem to play with.
+#
+# I've moved the classes into a module, added walls to the environment, and given the predator the ability to
+# chase the player.
 
-import pickle  # pickle file for saving/loading Q-tables. Did this in ENPH 353
+
+from environment_module import *
+
+import pickle  # pickle file for saving/loading Q-tables
 import time  # using this to keep track of our saved Q-Tables.
 
 import cv2
@@ -20,8 +27,8 @@ ENEMY_PENALTY = 300
 FOOD_REWARD = 25  
 epsilon = 0.5  # randomness
 EPS_DECAY = 0.9999  # Every episode will be epsilon*EPS_DECAY
-SHOW_EVERY = 5000  # how often to play through enviro visually.
-STEPS = 200
+SHOW_EVERY = 40000  # how often to play through enviro visually.
+STEPS = 125
 
 start_q_table = None  # put filename to load from pickle file here.
 
@@ -93,36 +100,36 @@ for episode in range(NUM_EPISODES):
         # This is where we set exploration/exploitation
         if np.random.random() > epsilon:
             i=0
-            action = ordered_action_list[i]
-            enviro.player.action(action)
+            player_action = ordered_action_list[i]
+            enviro.player.action(player_action)
 
             # This no bueno since it could theoretically get an out of bounds error. Lets just assume for now that there won't be a wall in every direction
             while enviro.is_wall(enviro.player.x, enviro.player.y):
                 enviro.player.set_location(prev_x, prev_y)
                 i+=1
-                action = ordered_action_list[i]
-                enviro.player.action(action)
+                player_action = ordered_action_list[i]
+                enviro.player.action(player_action)
         else:
-            action = np.random.randint(0, 8)
-            enviro.player.action(action)
-
+            player_action = np.random.randint(0, 8)
+            enviro.player.action(player_action)
             while enviro.is_wall(enviro.player.x,enviro.player.y):
                 enviro.player.set_location(prev_x, prev_y)
-                action = np.random.randint(0,8)
-                enviro.player.action(action)
+                player_action = np.random.randint(0, 8)
+                enviro.player.action(player_action)
 
-        #### LATER ### So here we want the predator to move towards the player if he is able to see him. ie, a wall isn't in the way
-        #prey.move()
-        ##############
+        #### LATER ###
+        # enviro.prey.move()
+        #
 
         # Definitely want to clean this up. Theres a nasty amount of repeating
+        #
+        # If the predator can see the player (ie, not behind a wall), then it will move towards the player. Otherwise,
+        # take a random action.
         if enviro.pred_behind_wall():
-            action = np.random.randint(0, 8)
-            enviro.pred.action(action)
+            enviro.pred.move()
             while enviro.is_wall(enviro.pred.x,enviro.pred.y):
                 enviro.pred.set_location(prev_predx, prev_predy)
-                action = np.random.randint(0,8)
-                enviro.pred.action(action)
+                enviro.pred.move()
         else:
             if enviro.pred.x > enviro.player.x:
                 if enviro.pred.y > enviro.player.y:
@@ -133,8 +140,7 @@ for episode in range(NUM_EPISODES):
                     enviro.pred.move(-1,0)
                 while enviro.is_wall(enviro.pred.x, enviro.pred.y):
                     enviro.pred.set_location(prev_predx, prev_predy)
-                    action = np.random.randint(0,8)
-                    enviro.pred.action(action)
+                    enviro.pred.move()
             elif enviro.pred.x < enviro.player.x :
                 if enviro.pred.y > enviro.player.y:
                     enviro.pred.move(1,-1)
@@ -144,8 +150,7 @@ for episode in range(NUM_EPISODES):
                     enviro.pred.move(1,0)
                 while enviro.is_wall(enviro.pred.x, enviro.pred.y):
                     enviro.pred.set_location(prev_predx, prev_predy)
-                    action = np.random.randint(0,8)
-                    enviro.pred.action(action)
+                    enviro.pred.move()
             elif enviro.pred.x == enviro.player.x:
                 if enviro.pred.y > enviro.player.y:
                     enviro.pred.move(0,-1)
@@ -153,10 +158,8 @@ for episode in range(NUM_EPISODES):
                     enviro.pred.move(0,1)
                 while enviro.is_wall(enviro.pred.x, enviro.pred.y):
                     enviro.pred.set_location(prev_predx, prev_predy)
-                    action = np.random.randint(0,8)
-                    enviro.pred.action(action)  
+                    enviro.pred.move()
             
-
 
         # Set rewards for getting prey or being eaten by predator, otherwise moves get small penalty and eating our prey is big win-win.
         if enviro.player.x == enviro.pred.x and enviro.player.y == enviro.pred.y:
@@ -169,13 +172,13 @@ for episode in range(NUM_EPISODES):
         # now make new obs immediately after the move and do our calcs for that magical Q-learning formula. I love humans...
         new_obs = (enviro.player-enviro.prey, enviro.player-enviro.pred)
         max_future_q = np.max(q_table[new_obs])
-        current_q = q_table[obs][action]
+        current_q = q_table[obs][player_action]
 
         if reward == FOOD_REWARD:
             new_q = FOOD_REWARD
         else:
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-        q_table[obs][action] = new_q
+        q_table[obs][player_action] = new_q
 
         # The Q-learning part is now done after using the above formula and updating the Q-values in the table.
         #
@@ -186,7 +189,7 @@ for episode in range(NUM_EPISODES):
   
             enviro.remove_creature(prev_predx,prev_predy)
             if prev_predx == enviro.prey.x and prev_predy == enviro.prey.y:
-                enviro.place_creature(enviro.prey.x,enviro.prey.y)
+                enviro.place_creature(enviro.prey.x,enviro.prey.y, PREY_N)
             enviro.place_creature(enviro.pred.x,enviro.pred.y, PREDATOR_N)
 
             enviro.display_env()            
