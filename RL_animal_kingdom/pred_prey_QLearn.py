@@ -21,13 +21,13 @@ style.use("ggplot")
 
 SIZE = 10
 
-NUM_EPISODES = 20000
+NUM_EPISODES = 40000
 MOVE_PENALTY = 1  
 ENEMY_PENALTY = 300  
 FOOD_REWARD = 25  
 epsilon = 0.5  # randomness
 EPS_DECAY = 0.9999  # Every episode will be epsilon*EPS_DECAY
-SHOW_EVERY = 40000  # how often to play through enviro visually.
+SHOW_EVERY = 10000  # how often to play through enviro visually.
 STEPS = 125
 
 start_q_table = None  # put filename to load from pickle file here.
@@ -92,8 +92,8 @@ for episode in range(NUM_EPISODES):
         prev_x = enviro.player.x
         prev_y = enviro.player.y
 
-        prev_predx = enviro.pred.x
-        prev_predy = enviro.pred.y
+        # # # prev_predx = enviro.pred.x
+        # # # prev_predy = enviro.pred.y
 
 
         # if we get a random number bigger than our random factor epsilon then we use our Q-table, otherwise move rando and hope that monster don't eat you.
@@ -125,40 +125,40 @@ for episode in range(NUM_EPISODES):
         #
         # If the predator can see the player (ie, not behind a wall), then it will move towards the player. Otherwise,
         # take a random action.
-        if enviro.pred_behind_wall():
-            enviro.pred.move()
-            while enviro.is_wall(enviro.pred.x,enviro.pred.y):
-                enviro.pred.set_location(prev_predx, prev_predy)
-                enviro.pred.move()
-        else:
-            if enviro.pred.x > enviro.player.x:
-                if enviro.pred.y > enviro.player.y:
-                    enviro.pred.move(-1,-1)
-                elif enviro.pred.y < enviro.player.y:
-                    enviro.pred.move(-1,1)
-                else:
-                    enviro.pred.move(-1,0)
-                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-                    enviro.pred.set_location(prev_predx, prev_predy)
-                    enviro.pred.move()
-            elif enviro.pred.x < enviro.player.x :
-                if enviro.pred.y > enviro.player.y:
-                    enviro.pred.move(1,-1)
-                elif enviro.pred.y < enviro.player.y:
-                    enviro.pred.move(1,1)
-                else:
-                    enviro.pred.move(1,0)
-                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-                    enviro.pred.set_location(prev_predx, prev_predy)
-                    enviro.pred.move()
-            elif enviro.pred.x == enviro.player.x:
-                if enviro.pred.y > enviro.player.y:
-                    enviro.pred.move(0,-1)
-                elif enviro.pred.y < enviro.player.y:
-                    enviro.pred.move(0,1)
-                while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-                    enviro.pred.set_location(prev_predx, prev_predy)
-                    enviro.pred.move()
+        # # # # if enviro.pred_behind_wall():
+        # # # #     enviro.pred.move()
+        # # # #     while enviro.is_wall(enviro.pred.x,enviro.pred.y):
+        # # # #         enviro.pred.set_location(prev_predx, prev_predy)
+        # # # #         enviro.pred.move()
+        # # # # else:
+        # # # #     if enviro.pred.x > enviro.player.x:
+        # # # #         if enviro.pred.y > enviro.player.y:
+        # # # #             enviro.pred.move(-1,-1)
+        # # # #         elif enviro.pred.y < enviro.player.y:
+        # # # #             enviro.pred.move(-1,1)
+        # # # #         else:
+        # # # #             enviro.pred.move(-1,0)
+        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
+        # # # #             enviro.pred.move()
+        # # # #     elif enviro.pred.x < enviro.player.x :
+        # # # #         if enviro.pred.y > enviro.player.y:
+        # # # #             enviro.pred.move(1,-1)
+        # # # #         elif enviro.pred.y < enviro.player.y:
+        # # # #             enviro.pred.move(1,1)
+        # # # #         else:
+        # # # #             enviro.pred.move(1,0)
+        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
+        # # # #             enviro.pred.move()
+        # # # #     elif enviro.pred.x == enviro.player.x:
+        # # # #         if enviro.pred.y > enviro.player.y:
+        # # # #             enviro.pred.move(0,-1)
+        # # # #         elif enviro.pred.y < enviro.player.y:
+        # # # #             enviro.pred.move(0,1)
+        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
+        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
+        # # # #             enviro.pred.move()
             
 
         # Set rewards for getting prey or being eaten by predator, otherwise moves get small penalty and eating our prey is big win-win.
@@ -187,10 +187,10 @@ for episode in range(NUM_EPISODES):
             enviro.remove_creature(prev_x,prev_y)
             enviro.place_creature(enviro.player.x,enviro.player.y, PLAYER_N)
   
-            enviro.remove_creature(prev_predx,prev_predy)
-            if prev_predx == enviro.prey.x and prev_predy == enviro.prey.y:
-                enviro.place_creature(enviro.prey.x,enviro.prey.y, PREY_N)
-            enviro.place_creature(enviro.pred.x,enviro.pred.y, PREDATOR_N)
+            # # # enviro.remove_creature(prev_predx,prev_predy)
+            # # # if prev_predx == enviro.prey.x and prev_predy == enviro.prey.y:
+            # # #     enviro.place_creature(enviro.prey.x,enviro.prey.y, PREY_N)
+            # # # enviro.place_creature(enviro.pred.x,enviro.pred.y, PREDATOR_N)
 
             enviro.display_env()            
             # If the round is over we want to see the ending to determine if our player failed/succeeded. In the OpenCV documentation apparently
@@ -222,7 +222,9 @@ moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, m
 plt.plot([i for i in range(len(moving_avg))],moving_avg)
 plt.ylabel(f"reward {SHOW_EVERY}ma")
 plt.xlabel("episode #")
+plt.title("Q-Learn Rolling Average For Each Episode")
 plt.show()
+
 
 #with open(f"qtable-{int(time.time())}.pickle", "wb") as f:
 #    pickle.dump(q_table,f)

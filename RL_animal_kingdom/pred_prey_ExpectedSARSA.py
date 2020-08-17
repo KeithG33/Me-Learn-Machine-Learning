@@ -149,12 +149,12 @@ for episode in range(NUM_EPISODES):
         enviro.player.set_location(curr_x,curr_y)
 
         current_q = q_table[obs][player_action]
-        next_q = q_table[new_obs][new_player_action]
+        next_expectation = np.mean(q_table[new_obs][:])
 
         if reward == FOOD_REWARD:
             new_q = FOOD_REWARD
         else:
-            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * next_q)
+            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * next_expectation)
         q_table[obs][player_action] = new_q
 
         # After this is done now S <-- S' and A <-- A' sooo...
