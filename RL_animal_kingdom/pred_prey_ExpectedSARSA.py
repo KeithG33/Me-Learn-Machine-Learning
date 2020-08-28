@@ -14,7 +14,7 @@ style.use("ggplot")
 
 SIZE = 10
 
-NUM_EPISODES = 40000
+NUM_EPISODES = 20000
 MOVE_PENALTY = 1  
 ENEMY_PENALTY = 300  
 FOOD_REWARD = 25  
@@ -191,7 +191,7 @@ moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, m
 plt.plot([i for i in range(len(moving_avg))],moving_avg)
 plt.ylabel(f"reward {SHOW_EVERY}ma")
 plt.xlabel("episode #")
-plt.title("SARSA Rolling Average For Each Episode")
+plt.title("Expected-SARSA Rolling Average For Each Episode")
 plt.show()
 
 #with open(f"qtable-{int(time.time())}.pickle", "wb") as f:

@@ -6,15 +6,12 @@
 
 
 from environment_module import *
-
 import pickle  # pickle file for saving/loading Q-tables
 import time  # using this to keep track of our saved Q-Tables.
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
-
 from PIL import Image
 
 style.use("ggplot")  
@@ -48,7 +45,8 @@ d = {1: (255, 0, 0),  # player (blue)
      4: (255,255,255),  # wall (white)
      5: (0, 0, 0)} # the abyss. aka nothing (black)
 
-
+food_count = 0
+pred_eaten = 0
 # Now the Q-Learning begins. Need Q-table first
 #
 # Here we have "for four-loops fore" [sic] all combinations of pairs (x1,y1),(x2,y2) that make up all possible observations. These fill the Q-table,
@@ -86,7 +84,7 @@ for episode in range(NUM_EPISODES):
     for i in range(STEPS):
         obs = (enviro.player-enviro.prey, enviro.player-enviro.pred)
 
-        # Ordered list for q_table[obs] so we can go through actions in descending order in the case of non valid actions
+        # descending list for q_table[obs] so we can go through actions in the case of non-valid actions
         ordered_action_list = np.argsort(q_table[obs])[::-1]
 
         prev_x = enviro.player.x
@@ -94,16 +92,14 @@ for episode in range(NUM_EPISODES):
 
         # # # prev_predx = enviro.pred.x
         # # # prev_predy = enviro.pred.y
-
-
-        # if we get a random number bigger than our random factor epsilon then we use our Q-table, otherwise move rando and hope that monster don't eat you.
-        # This is where we set exploration/exploitation
+ 
+        # Here we use an epsilon-greedy policy to choose and take an action.
         if np.random.random() > epsilon:
             i=0
             player_action = ordered_action_list[i]
             enviro.player.action(player_action)
 
-            # This no bueno since it could theoretically get an out of bounds error. Lets just assume for now that there won't be a wall in every direction
+            # This could theoretically get an out of bounds error. Lets just assume for now that there won't be a wall in every direction
             while enviro.is_wall(enviro.player.x, enviro.player.y):
                 enviro.player.set_location(prev_x, prev_y)
                 i+=1
@@ -162,9 +158,9 @@ for episode in range(NUM_EPISODES):
             
 
         # Set rewards for getting prey or being eaten by predator, otherwise moves get small penalty and eating our prey is big win-win.
-        if enviro.player.x == enviro.pred.x and enviro.player.y == enviro.pred.y:
+        if enviro.player == enviro.pred:
             reward = -ENEMY_PENALTY
-        elif enviro.player.x == enviro.prey.x and enviro.player.y == enviro.prey.y:
+        elif enviro.player == enviro.prey:
             reward = FOOD_REWARD
         else:
             reward = -MOVE_PENALTY

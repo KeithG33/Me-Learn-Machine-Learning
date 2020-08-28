@@ -6,12 +6,14 @@ from matplotlib import style
 from PIL import Image
 
 SIZE = 10
-
 PLAYER_N = 1  # player key in colour dict  
 PREY_N = 2  # prey key in colour dict
 PREDATOR_N = 3  # predator key in colour dict
 WALL_N = 4 # wall
 EMPTY = 5 # the abyss
+MOVE_PENALTY = 1  
+ENEMY_PENALTY = 300  
+FOOD_REWARD = 25  
 
 # color dict to label pred/prey/player/obstacle
 d = {1: (255, 0, 0),  # player (blue)
@@ -24,31 +26,27 @@ HWALL_Y = 5
 HWALL_XA =3
 HWALL_XB = 7
 
-
-# Here we describe our environment (a black array of size SIZE) and the creatures in it. Here we can choose to initialize the world how we want it with walls, animals, and us (player). 
+# Here we describe our environment (a black array of size SIZE) and the creatures in it
 class the_environment:
     def __init__(self): 
         self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8) # initialize to a black array/grid of squares with walls
-        self.place_horiz_wall(HWALL_XA, HWALL_XB, HWALL_Y)
+        ##self.place_horiz_wall(HWALL_XA, HWALL_XB, HWALL_Y)
         self.player = Creatures()
         self.prey = Creatures()
         self.pred = Creatures()
-        self.wall_a = (HWALL_XA,HWALL_Y)
-        self.wall_b = (HWALL_XB,HWALL_Y)
+        ##self.wall_a = (HWALL_XA,HWALL_Y)
+        ##self.wall_b = (HWALL_XB,HWALL_Y)
 
         while self.is_occupied(self.player.x, self.player.y):
-            self.player.x = np.random.randint(0,SIZE)
-            self.player.y = np.random.randint(0,SIZE)
+            self.player = Creatures()
         self.place_creature(self.player.x, self.player.y, PLAYER_N)
 
         while self.is_occupied(self.prey.x,self.prey.y):
-            self.prey.x = np.random.randint(0,SIZE)
-            self.prey.y = np.random.randint(0,SIZE)
+            self.prey = Creatures()
         self.place_creature(self.prey.x, self.prey.y, PREY_N)
 
         while self.is_occupied(self.pred.x,self.pred.y):
-            self.pred.x = np.random.randint(0,SIZE)
-            self.pred.y = np.random.randint(0,SIZE)
+            self.pred = Creatures()
         self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
     
     def is_occupied(self,x,y):
@@ -56,7 +54,24 @@ class the_environment:
             return False
         else:
             return True
-        return False
+
+    def reset(self):
+        self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)
+        self.player = Creatures()
+        while self.is_occupied(self.player.x, self.player.y):
+            self.player = Creatures()
+        self.place_creature(self.player.x, self.player.y, PLAYER_N)
+
+        self.prey = Creatures()
+        while self.is_occupied(self.prey.x,self.prey.y):
+            self.prey = Creatures()
+        self.place_creature(self.prey.x, self.prey.y, PREY_N)
+
+        self.pred = Creatures()
+        while self.is_occupied(self.pred.x,self.pred.y):
+            self.pred = Creatures()
+        self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
+
 
     # No idea why the above code doesnt work when using 255 instead of 0...I'll deal with this later
     def is_wall(self,x,y):
@@ -68,7 +83,6 @@ class the_environment:
             return True
         else:
             return False
-
 
     # method for placing prey/pred/player into the environment. Should have a check maybe, using the is_occupied() method for that tho
     def place_creature(self, x, y, object_type):
@@ -90,8 +104,8 @@ class the_environment:
         img = Image.fromarray(self.env, 'RGB')
         img = img.resize((500, 500))
         cv2.imshow("image", np.array(img))
-        cv2.waitKey(0)
-
+        cv2.waitKey(10)
+    
     # Checking if the player can see the pred (or vice versa). Need to check if there is a wall in the way by finding
     # angle to walls and player/pred
     def pred_behind_wall(self):
@@ -127,6 +141,7 @@ class the_environment:
             elif x1 > HWALL_XB and x2 > HWALL_XB:
                 return True
 
+
 class Creatures:
     def __init__(self):
         self.x = np.random.randint(0,SIZE)
@@ -138,6 +153,9 @@ class Creatures:
     # define subtraction to get distance for our pred/prey object coords
     def __sub__(self, other):
         return (self.x-other.x, self.y-other.y)
+    
+    def __eq__(self,other):
+        return self.x == other.x and self.y == other.y
     
     # 8 choices for 8 adjacent squares
     def action(self, choice):
@@ -157,6 +175,8 @@ class Creatures:
             self.move(x=0,y=-1)
         elif choice == 7:
             self.move(x=-1,y=0)
+        elif choice == 8:
+            self.move(x=0,y=0)
 
     def move(self, x=False, y=False):
             # If no value for x, move randomly
