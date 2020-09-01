@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/Users/keith/Desktop/Programming/MLML/RL_animal_kingdom")
 from environment_module import *
 
 import pickle  # pickle file for saving/loading Q-tables

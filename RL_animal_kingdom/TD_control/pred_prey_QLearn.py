@@ -1,10 +1,10 @@
-# This began as a simple Q-learning script from watching a youtube video by pythonprogamming.net.Credit to them
-# for the skeleton of this code, and many thanks for the fun toy problem to play with.
+# This began as a simple Q-learning script from watching a youtube video by pythonprogamming.net. Credit to them
+# for the skeleton of this code, and many thanks for the fun toy environment/problem to play with.
 #
 # I've moved the classes into a module, added walls to the environment, and given the predator the ability to
-# chase the player.
-
-
+# chase the player, which will interesting when I add a model to predict these movements
+import sys
+sys.path.append("/Users/keith/Desktop/Programming/MLML/RL_animal_kingdom")
 from environment_module import *
 import pickle  # pickle file for saving/loading Q-tables
 import time  # using this to keep track of our saved Q-Tables.
@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
 from PIL import Image
+
 
 style.use("ggplot")  
 
@@ -93,13 +94,13 @@ for episode in range(NUM_EPISODES):
         # # # prev_predx = enviro.pred.x
         # # # prev_predy = enviro.pred.y
  
-        # Here we use an epsilon-greedy policy to choose and take an action.
+        # Epsilon-greedy policy to choose and take an action.
         if np.random.random() > epsilon:
             i=0
             player_action = ordered_action_list[i]
             enviro.player.action(player_action)
 
-            # This could theoretically get an out of bounds error. Lets just assume for now that there won't be a wall in every direction
+            # Choose the next best move until we aren't moving into a wall
             while enviro.is_wall(enviro.player.x, enviro.player.y):
                 enviro.player.set_location(prev_x, prev_y)
                 i+=1
@@ -108,6 +109,7 @@ for episode in range(NUM_EPISODES):
         else:
             player_action = np.random.randint(0, 8)
             enviro.player.action(player_action)
+            
             while enviro.is_wall(enviro.player.x,enviro.player.y):
                 enviro.player.set_location(prev_x, prev_y)
                 player_action = np.random.randint(0, 8)
@@ -117,7 +119,7 @@ for episode in range(NUM_EPISODES):
         # enviro.prey.move()
         #
 
-        # Definitely want to clean this up. Theres a nasty amount of repeating
+        # Definitely want to clean this up and/or make it a method. There be a nasty amount of repeating, too.
         #
         # If the predator can see the player (ie, not behind a wall), then it will move towards the player. Otherwise,
         # take a random action.
