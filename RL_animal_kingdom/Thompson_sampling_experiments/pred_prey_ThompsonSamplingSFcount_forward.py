@@ -17,7 +17,7 @@ import random
 style.use("ggplot")  
 SIZE = 10
 NUM_EPISODES = 40000
-SHOW_EVERY = 10000 # how often to play through enviro visually.
+SHOW_EVERY = 1000 # how often to play through enviro visually.
 EP_STEPS = 125
 NUM_ACTION = 8
 REWARD_DECAY = 0.98

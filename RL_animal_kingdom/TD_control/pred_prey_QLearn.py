@@ -117,47 +117,8 @@ for episode in range(NUM_EPISODES):
 
         #### LATER ###
         # enviro.prey.move()
-        #
-
-        # Definitely want to clean this up and/or make it a method. There be a nasty amount of repeating, too.
-        #
-        # If the predator can see the player (ie, not behind a wall), then it will move towards the player. Otherwise,
-        # take a random action.
-        # # # # if enviro.pred_behind_wall():
-        # # # #     enviro.pred.move()
-        # # # #     while enviro.is_wall(enviro.pred.x,enviro.pred.y):
-        # # # #         enviro.pred.set_location(prev_predx, prev_predy)
-        # # # #         enviro.pred.move()
-        # # # # else:
-        # # # #     if enviro.pred.x > enviro.player.x:
-        # # # #         if enviro.pred.y > enviro.player.y:
-        # # # #             enviro.pred.move(-1,-1)
-        # # # #         elif enviro.pred.y < enviro.player.y:
-        # # # #             enviro.pred.move(-1,1)
-        # # # #         else:
-        # # # #             enviro.pred.move(-1,0)
-        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
-        # # # #             enviro.pred.move()
-        # # # #     elif enviro.pred.x < enviro.player.x :
-        # # # #         if enviro.pred.y > enviro.player.y:
-        # # # #             enviro.pred.move(1,-1)
-        # # # #         elif enviro.pred.y < enviro.player.y:
-        # # # #             enviro.pred.move(1,1)
-        # # # #         else:
-        # # # #             enviro.pred.move(1,0)
-        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
-        # # # #             enviro.pred.move()
-        # # # #     elif enviro.pred.x == enviro.player.x:
-        # # # #         if enviro.pred.y > enviro.player.y:
-        # # # #             enviro.pred.move(0,-1)
-        # # # #         elif enviro.pred.y < enviro.player.y:
-        # # # #             enviro.pred.move(0,1)
-        # # # #         while enviro.is_wall(enviro.pred.x, enviro.pred.y):
-        # # # #             enviro.pred.set_location(prev_predx, prev_predy)
-        # # # #             enviro.pred.move()
-            
+        # enviro.pred_chase()
+        #### LATER ###         
 
         # Set rewards for getting prey or being eaten by predator, otherwise moves get small penalty and eating our prey is big win-win.
         if enviro.player == enviro.pred:

@@ -26,26 +26,44 @@ HWALL_Y = 5
 HWALL_XA =3
 HWALL_XB = 7
 
-# Here we describe our environment (a black array of size SIZE) and the creatures in it
+ARE_THERE_WALLS = False
+
+# Here we describe our self (a black array of size SIZE) and the creatures in it
 class the_environment:
     def __init__(self): 
         self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8) # initialize to a black array/grid of squares with walls
         ##self.place_horiz_wall(HWALL_XA, HWALL_XB, HWALL_Y)
-        self.player = Creatures()
-        self.prey = Creatures()
-        self.pred = Creatures()
         ##self.wall_a = (HWALL_XA,HWALL_Y)
         ##self.wall_b = (HWALL_XB,HWALL_Y)
 
-        while self.is_occupied(self.player.x, self.player.y):
-            self.player = Creatures()
-        self.place_creature(self.player.x, self.player.y, PLAYER_N)
+        self.player = Creatures()
+        self.place_creature(self.player.x, self.player.y,PLAYER_N)
 
-        while self.is_occupied(self.prey.x,self.prey.y):
+        self.prey = Creatures()
+        while self.prey == self.player:
             self.prey = Creatures()
         self.place_creature(self.prey.x, self.prey.y, PREY_N)
 
-        while self.is_occupied(self.pred.x,self.pred.y):
+        self.pred = Creatures()
+        while self.pred == self.player or self.pred == self.prey:
+            self.pred = Creatures()
+        self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
+
+        #print("player at x={}, y={} \n pred at x={}, y={} \n prey at x={}, y={}".format(self.player.x,self.player.y,self.pred.x,self.pred.y,self.prey.x,self.prey.y))
+
+    def reset(self):
+        self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)
+        
+        self.player = Creatures()
+        self.place_creature(self.player.x, self.player.y,PLAYER_N)
+
+        self.prey = Creatures()
+        while self.prey == self.player:
+            self.prey = Creatures()
+        self.place_creature(self.prey.x, self.prey.y, PREY_N)
+
+        self.pred = Creatures()
+        while self.pred == self.player or self.pred == self.prey:
             self.pred = Creatures()
         self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
     
@@ -55,26 +73,11 @@ class the_environment:
         else:
             return True
 
-    def reset(self):
-        self.env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)
-        self.player = Creatures()
-        while self.is_occupied(self.player.x, self.player.y):
-            self.player = Creatures()
-        self.place_creature(self.player.x, self.player.y, PLAYER_N)
-
-        self.prey = Creatures()
-        while self.is_occupied(self.prey.x,self.prey.y):
-            self.prey = Creatures()
-        self.place_creature(self.prey.x, self.prey.y, PREY_N)
-
-        self.pred = Creatures()
-        while self.is_occupied(self.pred.x,self.pred.y):
-            self.pred = Creatures()
-        self.place_creature(self.pred.x, self.pred.y, PREDATOR_N)
-
-
     # No idea why the above code doesnt work when using 255 instead of 0...I'll deal with this later
     def is_wall(self,x,y):
+        if not ARE_THERE_WALLS:
+            return False
+
         count = 0
         for value in self.env[y][x]:
             if value == 255:
@@ -84,14 +87,14 @@ class the_environment:
         else:
             return False
 
-    # method for placing prey/pred/player into the environment. Should have a check maybe, using the is_occupied() method for that tho
+    # method for placing prey/pred/player into the self. Should have a check maybe, using the is_occupied() method for that tho
     def place_creature(self, x, y, object_type):
         self.env[y][x] = d[object_type]
     
     def remove_creature(self,x,y):
         self.env[y][x] = d[EMPTY]
 
-    # walls will be initialized within the environment first so gonna leave any checking for valid placement until later
+    # walls will be initialized within the self first so gonna leave any checking for valid placement until later
     def place_vert_wall(self, start_y, end_y, x):
         for i in range(start_y, end_y):
             self.env[i][x] = d[WALL_N]
@@ -104,11 +107,14 @@ class the_environment:
         img = Image.fromarray(self.env, 'RGB')
         img = img.resize((500, 500))
         cv2.imshow("image", np.array(img))
-        cv2.waitKey(10)
+        cv2.waitKey(0)
     
     # Checking if the player can see the pred (or vice versa). Need to check if there is a wall in the way by finding
     # angle to walls and player/pred
     def pred_behind_wall(self):
+        if not ARE_THERE_WALLS:
+            return False
+
         def find_angle(x1,y1,x2,y2):
             rise = y2-y1
             run = x2-x1
@@ -141,6 +147,41 @@ class the_environment:
             elif x1 > HWALL_XB and x2 > HWALL_XB:
                 return True
 
+    # If the predator can see the player (ie, not behind a wall), then it will move towards the player. Otherwise,
+    # take a random action.omg
+    def pred_chase(self,start_predx,start_predy):
+        # find signed x and y distance to player.
+        d_pred_play = self.pred - self.player
+        print("Obs distances are: x = {} and y = {}".format(d_pred_play[0],d_pred_play[1]))
+        # move randomly if behind a wall
+        if self.pred_behind_wall():
+            print("behind a wall")
+            self.pred.move()
+            while self.is_wall(self.pred.x,self.pred.y):
+                self.pred.set_location(start_predx, start_predy)
+                self.pred.move()
+        else:
+            if d_pred_play[0] > 0:
+                print("DECREASING X BY ONE")
+                self.pred.move(-1,0)    
+                if self.is_wall(self.pred.x,self.pred.y):
+                    self.pred.set_location(start_predx, start_predy)
+            elif d_pred_play[0] < 0:
+                print("INCREASING X BY ONE")                
+                self.pred.move(1,0)  
+                if self.is_wall(self.pred.x,self.pred.y):
+                    self.pred.set_location(start_predx, start_predy)
+            if d_pred_play[1] > 0:
+                print("DECREASING Y BY ONE")
+                self.pred.move(0,-1)    
+                if self.is_wall(self.pred.x,self.pred.y):
+                    self.pred.set_location(start_predx, start_predy)  
+            elif d_pred_play[1] < 0:
+                print("INCREASING Y BY ONE")
+                self.pred.move(0,1)    
+                if self.is_wall(self.pred.x,self.pred.y):
+                    self.pred.set_location(start_predx, start_predy)
+
 
 class Creatures:
     def __init__(self):
@@ -157,7 +198,7 @@ class Creatures:
     def __eq__(self,other):
         return self.x == other.x and self.y == other.y
     
-    # 8 choices for 8 adjacent squares
+    # 8 choices for 8 adjacent squares + no move
     def action(self, choice):
         if choice == 0:
             self.move(x=1, y=1)
@@ -178,19 +219,19 @@ class Creatures:
         elif choice == 8:
             self.move(x=0,y=0)
 
-    def move(self, x=False, y=False):
+    def move(self, x=None, y=None):
             # If no value for x, move randomly
-            if not x:
+            if x is None:
+                print("moving randomly")
                 self.x += np.random.randint(-1, 2)
             else:
                 self.x += x
-
             # If no value for y, move randomly
-            if not y:
+            if y is None:
+                print("moving randomly")
                 self.y += np.random.randint(-1, 2)
             else:
                 self.y += y
-
             # Doesn't allow x or y to exceed size of map. Keeps value of boundary
             if self.x < 0:
                 self.x = 0
